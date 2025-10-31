@@ -87,3 +87,13 @@ function disable_default_dashboard_widgets() {
 	unset( $wp_meta_boxes['dashboard']['normal']['core']['rg_forms_dashboard'] );
 }
 add_action( 'wp_dashboard_setup', 'disable_default_dashboard_widgets', 999 );
+
+function remove_jq_migrate($scripts) {
+	if (! is_admin() && isset($scripts->registered['jquery'])) {
+		$script = $scripts->registered['jquery'];
+		if ($script->deps) {
+			$script->deps = array_diff($script->deps, array('jquery-migrate'));
+		}
+	}
+}
+add_action('wp_default_scripts', 'remove_jq_migrate');
