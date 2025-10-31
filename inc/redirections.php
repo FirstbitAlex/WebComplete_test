@@ -4,17 +4,6 @@
  *
  */
 
-function demchco_theme__redirections() {
-
-    if( is_singular('slug') || is_post_type_archive('slug') || is_tax('slug') ){
-        wp_redirect( home_url(), 301 );
-        exit;
-    }
-  
-} 
-// add_action( 'template_redirect', 'demchco_theme__redirections');
-
-//Redirect from author page to home page
 add_action( 'template_redirect', function () {
 	if ( is_author() ) {
 		wp_redirect( home_url(), 301 );
@@ -25,4 +14,9 @@ add_action( 'template_redirect', function () {
 		wp_redirect( strtok( $_SERVER["REQUEST_URI"], '?' ), 301 );
 		exit;
 	}
-} );
+
+	if (is_front_page() ) {
+		wp_redirect(get_post_type_archive_link('article'), 301);
+		exit;
+	}
+});
