@@ -1,0 +1,18 @@
+root = true
+
+# Global for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+# Individual settings
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{json,js,html}]
+indent_style = tab
+indent_size = 4

@@ -1,0 +1,27 @@
+$font_abiz: 'Al Bizantheum';
+$font_sspr: 'SweetSansProRegular';
+$font_tas : 'TheAcresSans';
+
+@font-face {
+	font-family: 'Al Bizantheum';
+	src: url('fonts/Al_Bizantheum.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'SweetSansProRegular';
+	src: url('fonts/SweetSansProRegular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'TheAcresSans';
+	src: url('fonts/TheAcresSans.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}

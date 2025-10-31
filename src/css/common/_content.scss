@@ -1,0 +1,14 @@
+.content-wrap {
+	p {
+		position: relative;
+		margin-top: 15px;
+		font-weight: 400;
+		font-size: 11px;
+		line-height: 20px;
+		letter-spacing: 0;
+
+		*>&:first-child {
+			margin-top: unset;
+		}
+	}
+}
