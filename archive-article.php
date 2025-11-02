@@ -2,8 +2,8 @@
 get_header();
 
 global $wp_query;
-$total_found = $wp_query->found_posts;
-$initial_shown = 9;
+$posts_per_page = get_option('posts_per_page');
+$is_show_load_more = (int)($wp_query->found_posts > $posts_per_page);
 
 $terms = get_terms([
 	'taxonomy' => 'article-topic',
@@ -11,24 +11,31 @@ $terms = get_terms([
 ]);
 
 $current_topic = '';
-if (isset($_GET['article-topic']) && ! empty($_GET['article-topic'])) {
+if (isset($_GET['article-topic']) && !empty($_GET['article-topic'])) {
 	$current_topic = sanitize_text_field(wp_unslash($_GET['article-topic']));
 }
 ?>
 
 <main id="primary">
-	<section>
+	<!-- PAGE TITLE -->
+	<header>
 		<div class="container">
 			<h1 class="page-title">
 				<?php _e('The Journal', 'arctest'); ?>
 			</h1>
 		</div>
-	</section>
+	</header>
 
+	<!-- FILTERS LIST  -->
 	<section class="section">
 		<div class="container">
-			<nav class="filter-nav">
-				<button class="filter-nav__item<?php echo $current_topic === '' ? ' active' : ''; ?>" data-term-slug="">
+			<nav
+				class="filter-nav"
+				aria-label="<?php esc_attr_e('Article topics', 'arctest'); ?>">
+				<button
+					class="filter-nav__item<?php echo $current_topic === '' ? ' active' : ''; ?>"
+					data-term-slug=""
+					type="button">
 					<?php echo esc_html__('All', 'arctest'); ?>
 				</button>
 
@@ -38,7 +45,10 @@ if (isset($_GET['article-topic']) && ! empty($_GET['article-topic'])) {
 						$name = $term->name;
 						$active = ($current_topic === $slug) ? ' active' : '';
 					?>
-						<button class="filter-nav__item<?php echo $active; ?>" data-term-slug="<?php echo esc_attr($slug); ?>">
+						<button
+							class="filter-nav__item<?php echo esc_attr($active); ?>"
+							data-term-slug="<?php echo esc_attr($slug); ?>"
+							type="button">
 							<?php echo esc_html($name); ?>
 						</button>
 					<?php } ?>
@@ -49,9 +59,14 @@ if (isset($_GET['article-topic']) && ! empty($_GET['article-topic'])) {
 		</div>
 	</section>
 
-	<section class="section">
+	<!-- POSTS LIST -->
+	<section class="section" aria-labelledby="article-list-heading">
 		<div class="container">
-			<div class="post-list" id="post-list">
+			<h2 class="screen-reader-text" id="article-list-heading">
+				<?php _e('Articles list', 'arctest'); ?>
+			</h2>
+
+			<div class="post-list" id="post-list" role="region" aria-live="polite" aria-labelledby="article-list-heading">
 				<?php
 				if (have_posts()) {
 					while (have_posts()) {
@@ -67,12 +82,20 @@ if (isset($_GET['article-topic']) && ! empty($_GET['article-topic'])) {
 		</div>
 	</section>
 
-	<section class="section section--load-more <?php if ($total_found > $initial_shown) echo 'show' ?>">
+	<!-- LOAD MORE -->
+	<section class="section section--load-more <?php if ($is_show_load_more) echo 'show' ?>">
 		<div class="container">
 			<div class="load-more__wrap">
-				<button class="load-more__item" data-page="1" id="load-more">
+				<button
+					class="load-more__item"
+					id="load-more"
+					data-slug=""
+					data-loadmore_ppp="3"
+					data-offset="<?php echo esc_attr($posts_per_page) ?>"
+					type="button">
+
 					<span class="screen-reader-text">
-						<?php _e('Download more', 'arctest') ?>
+						<?php _e('Show more articles', 'arctest') ?>
 					</span>
 
 					<?php _e('LOAD MORE', 'arctest') ?>

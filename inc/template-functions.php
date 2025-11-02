@@ -65,42 +65,54 @@ function register_article_topic_taxonomy() {
 	);
 }
 
-add_action('wp_ajax_filter_articles', 'filter_articles');
-add_action('wp_ajax_nopriv_filter_articles', 'filter_articles');
-function filter_articles() {
-	$term_slug = isset($_POST['term_slug']) ? sanitize_text_field(wp_unslash($_POST['term_slug'])) : '';
-	$is_initial = isset($_POST['initial']) && intval($_POST['initial']) === 1;
+add_action('wp_ajax_get_articles', 'get_articles');
+add_action('wp_ajax_nopriv_get_articles', 'get_articles');
+function get_articles() {
 
-	$posts_per_page = $is_initial ? 9 : (intval($_POST['posts_per_page'] ?? 3));
-	$offset = $is_initial ? 0 : (intval($_POST['offset'] ?? 0));
+	$offset = 0;
+	if (!empty($_POST['offset']))
+		$offset = $_POST['offset'] + $_POST['loadmore_ppp'];
+	else
+		$offset = get_option('posts_per_page');
+
+	$response = [
+		"post_list" 		=> [],
+		"is_show_load_more" => 0,
+		"offset" 			=> $offset,
+	];
 
 	$args = [
 		'post_type'      => 'article',
-		'posts_per_page' => $posts_per_page,
-		'offset'         => $offset,
+		'posts_per_page' => $_POST['loadmore_ppp'],
+		'offset'         => $_POST['offset'],
 		'orderby'        => 'date',
 		'order'          => 'DESC',
 	];
 
-	if ($term_slug) {
+	if ($_POST['slug']) {
 		$args['tax_query'] = [[
 			'taxonomy' => 'article-topic',
 			'field'    => 'slug',
-			'terms'    => $term_slug,
+			'terms'    => $_POST['slug'],
 		]];
 	}
 
 	$q = new WP_Query($args);
 
+	ob_start();
 	if ($q->have_posts()) {
 		while ($q->have_posts()) {
 			$q->the_post();
 			get_template_part('template-parts/content', 'article');
 		}
 		wp_reset_postdata();
-	} else {
-		echo '<p>' . esc_html__('Постов не найдено', 'arctest') . '</p>';
 	}
 
+	$response['post_list'] = ob_get_contents();
+	ob_end_clean();
+
+		$response['is_show_load_more'] = (int)($q->found_posts > $offset);
+
+		echo json_encode($response);
 	wp_die();
 }

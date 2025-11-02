@@ -1,121 +1,74 @@
-jQuery(document).ready(function ($) {
+jQuery(document).ready(($) => {
+	const postList = $('#post-list');
+	const loadMore = $('#load-more');
+	const filterItems = $('.filter-nav__item');
 
-	function getQueryParam(name) {
-		var params = new URLSearchParams(window.location.search);
-		return params.get(name);
-	}
+	const updateUrlParam = (slug) => {
+		const params = new URLSearchParams(window.location.search);
 
-	function updateUrlParam(slug) {
-		var params = new URLSearchParams(window.location.search);
-		if (!slug) params.delete('article-topic');
-		else params.set('article-topic', slug);
-		var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+		if (!slug) {
+			params.delete('article-topic');
+		} else {
+			params.set('article-topic', slug);
+		}
+
+		const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
 		history.pushState(null, '', newUrl);
-	}
-
-	function loadArticles(slug, options) {
-		options = options || {};
-		var data = {
-			action: 'filter_articles',
-			term_slug: slug || '',
-		};
-
-		if (options.initial) {
-			data.initial = 1; // first 9 posts
-		} else {
-			// offset
-			data.offset = options.offset || 0;
-			data.posts_per_page = options.posts_per_page || 3;
-		}
-
-		if (!options.initial) {
-			$('#load-more').text('Loading...');
-		}
-
-		return $.ajax({
-			url: articleAjax.ajax_url,
-			type: 'POST',
-			dataType: 'html',
-			data: data
-		});
-	}
-
-	// for successful response
-	function handleResponseAndUpdate(response, append) {
-		var $tmp = $('<div>').html(response);
-		var $items = $tmp.find('article');
-		var returnedCount = $items.length;
-
-		if (append) {
-			$('#post-list').append($items);
-		} else {
-			$('#post-list').html($items);
-		}
-
-		var postsPerPageRequested = (append ? 3 : 9);
-		if (returnedCount < postsPerPageRequested) {
-			$('#load-more').hide();
-		} else {
-			$('#load-more').show();
-		}
-	}
-
-	// init by load page
-	var initialSlug = getQueryParam('article-topic');
-	if (initialSlug) {
-		// load first 9 posts by category
-		loadArticles(initialSlug, { initial: true })
-			.done(function (resp) {
-				handleResponseAndUpdate(resp, false);
-				updateUrlParam(initialSlug);
-				$('#load-more').attr('data-page', 1);
-			})
-			.fail(function () {
-				$('#post-list').html('<p>Loading error</p>');
-				$('#load-more').hide();
-			});
-	}
+	};
 
 	// filters
-	var filters = $('.filter-nav__item');
-	$(document).on('click', '.filter-nav__item', function (e) {
+	filterItems.on('click', (e) => {
 		e.preventDefault();
-		var slug = $(this).data('term-slug') || '';
-		var _this = $(this);
-		// update URL
-		updateUrlParam(slug);
-		// reset counter
-		$('#load-more').data('page', 1);
-		// first 9 posts
-		loadArticles(slug, { initial: true })
-			.done(function (resp) {
-				handleResponseAndUpdate(resp, false);
-				filters.removeClass('active');
-				_this.addClass('active');
-			})
-			.fail(function () {
-				$('#post-list').html('<p>Error load</p>');
-				$('#load-more').hide();
-			});
+
+		const $this = $(e.currentTarget);
+		const slug = $this.data('term-slug');
+
+		const options = {
+			action: 'get_articles',
+			slug,
+			loadmore_ppp: 0,
+			offset: 0,
+		};
+
+		$.ajax({
+			url: articleAjax.ajax_url,
+			type: 'POST',
+			data: options,
+			dataType: 'json',
+			success: (response) => {
+				filterItems.removeClass('active');
+				$this.addClass('active');
+
+				postList.html(response.post_list);
+				loadMore.data('offset', response.offset);
+
+				$('.section--load-more').toggleClass('show', !!response.is_show_load_more);
+
+				updateUrlParam(slug);
+			},
+		});
 	});
 
 	// load more
-	$(document).on('click', '#load-more', function (e) {
+	loadMore.on('click', (e) => {
 		e.preventDefault();
-		var $btn = $(this);
 
-		// how mach card is show
-		var currentCount = $('#post-list').find('article').length || 0;
-		var slug = $('.filter-nav__item.active').data('term-slug') || getQueryParam('article-topic') || '';
+		const $this = $(e.currentTarget);
+		const options = { ...$this.data(), action: 'get_articles' };
 
-		loadArticles(slug, { offset: currentCount, posts_per_page: 3 })
-			.done(function (resp) {
-				// append
-				handleResponseAndUpdate(resp, true);
-				$btn.text('Load More');
-			})
-			.fail(function () {
-				$btn.text('Error');
-			});
+		$.ajax({
+			url: articleAjax.ajax_url,
+			type: 'POST',
+			data: options,
+			dataType: 'json',
+			success: (response) => {
+				postList.append(response.post_list);
+				$this.data('offset', response.offset);
+
+				if (!response.is_show_load_more) {
+					$('.section--load-more').removeClass('show');
+				}
+			},
+		});
 	});
 });
